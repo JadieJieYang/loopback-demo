@@ -1,0 +1,116 @@
+{
+  "tables": {
+    "raw_applications": {
+      "owner": "Data Engineering",
+      "description": "Raw application records ingested from upstream lending platform",
+      "columns": {
+        "app_id": {
+          "type": "VARCHAR",
+          "description": "Unique application identifier. Format: APP-XXXXXXXX",
+          "nullable": false
+        },
+        "customer_id": {
+          "type": "VARCHAR",
+          "description": "Unique customer identifier. One customer can have multiple applications",
+          "nullable": false
+        },
+        "application_dt": {
+          "type": "DATE",
+          "description": "Date the application was submitted by the customer",
+          "nullable": false
+        },
+        "product_type": {
+          "type": "VARCHAR",
+          "description": "Product line of the application. Possible values: CREDIT_CARD, PERSONAL_LOAN, AUTO_LOAN. WARNING: Can be NULL when upstream feed sends incomplete payloads.",
+          "nullable": true
+        },
+        "credit_score": {
+          "type": "INT",
+          "description": "FICO credit score at time of application. Range: 300-850. Note: values of 0 indicate no credit history, not an actual score.",
+          "nullable": true
+        },
+        "annual_income": {
+          "type": "DECIMAL",
+          "description": "Self-reported annual income in USD at time of application",
+          "nullable": true
+        },
+        "requested_amount": {
+          "type": "DECIMAL",
+          "description": "Credit limit or loan amount requested by the customer in USD",
+          "nullable": true
+        },
+        "state": {
+          "type": "VARCHAR(2)",
+          "description": "US state code of the applicant (e.g. VA, CA, NY)",
+          "nullable": true
+        },
+        "channel": {
+          "type": "VARCHAR",
+          "description": "Acquisition channel. Possible values: ONLINE, BRANCH, PARTNER",
+          "nullable": true
+        },
+        "raw_status": {
+          "type": "VARCHAR",
+          "description": "Raw underwriting decision. Possible values: APPROVED, DECLINED, PENDING, REFERRED",
+          "nullable": true
+        },
+        "ingested_at": {
+          "type": "TIMESTAMP",
+          "description": "Timestamp when this record was loaded into the data warehouse",
+          "nullable": false
+        }
+      }
+    },
+    "da_approval_metrics": {
+      "owner": "Data Analytics",
+      "description": "Analytical table calculating approval rates by product, channel, and time. Built on raw_applications.",
+      "columns": {
+        "application_dt": {
+          "type": "DATE",
+          "description": "Date of application, used as the primary time dimension for reporting",
+          "nullable": false
+        },
+        "product_type": {
+          "type": "VARCHAR",
+          "description": "Product line dimension. Inherited from raw_applications.product_type",
+          "nullable": true
+        },
+        "channel": {
+          "type": "VARCHAR",
+          "description": "Acquisition channel dimension",
+          "nullable": true
+        },
+        "state": {
+          "type": "VARCHAR",
+          "description": "US state dimension",
+          "nullable": true
+        },
+        "total_apps": {
+          "type": "INT",
+          "description": "Total number of applications received for this dimension combination",
+          "nullable": false
+        },
+        "approved_apps": {
+          "type": "INT",
+          "description": "Number of applications that received approve_flag = 1",
+          "nullable": false
+        },
+        "approve_flag": {
+          "type": "INT",
+          "description": "Binary approval indicator. Value is 1 (approved) when ALL conditions are met: credit_score > 700 AND annual_income > 50000 AND product_type IS NOT NULL AND raw_status = APPROVED. Otherwise 0.",
+          "nullable": false
+        },
+        "approve_rate_pct": {
+          "type": "DECIMAL",
+          "description": "Approval rate as a percentage. Calculated as approved_apps / total_apps * 100. This is the metric shown in BA dashboards.",
+          "nullable": true
+        },
+        "last_refreshed_at": {
+          "type": "TIMESTAMP",
+          "description": "Timestamp of the last time this table was refreshed",
+          "nullable": false
+        }
+      }
+    }
+  }
+}
