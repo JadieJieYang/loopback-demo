@@ -23,6 +23,8 @@ def register_action_handlers(app):
         value = _parse_value(body)
         entry_id = value.get("entry_id", "")
         answer = value.get("answer", "")
+        thread_ts = value.get("thread_ts") or body["message"].get("thread_ts")
+        asker_id = value.get("asker_id")
         channel = body["channel"]["id"]
         message_ts = body["message"]["ts"]
         question_text = _extract_question(body)
@@ -39,6 +41,8 @@ def register_action_handlers(app):
                 question_text,
                 status="verified",
                 results=[{"entry_id": entry_id, "answer": answer, "confidence": 0.95, "verified": True}],
+                thread_ts=thread_ts,
+                asker_id=asker_id,
             ),
             text=f"[verified] {question_text}",
         )
@@ -48,6 +52,8 @@ def register_action_handlers(app):
         ack()
         value = _parse_value(body)
         entry_id = value.get("entry_id", "")
+        thread_ts = value.get("thread_ts") or body["message"].get("thread_ts")
+        asker_id = value.get("asker_id")
         channel = body["channel"]["id"]
         message_ts = body["message"]["ts"]
         question_text = _extract_question(body)
@@ -60,7 +66,8 @@ def register_action_handlers(app):
         client.chat_update(
             channel=channel,
             ts=message_ts,
-            blocks=build_task_card(question_text, status="escalate"),
+            blocks=build_task_card(question_text, status="escalate",
+                                   thread_ts=thread_ts, asker_id=asker_id),
             text=f"[escalate] {question_text}",
         )
 

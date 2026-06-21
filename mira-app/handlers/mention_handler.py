@@ -30,11 +30,13 @@ def _strip_mention(raw_text: str) -> str:
     return _MENTION_PATTERN.sub("", raw_text).strip()
 
 
-def _update_card(client, channel: str, ts: str, question: str, status: str, results=None):
+def _update_card(client, channel: str, ts: str, question: str, status: str,
+                 results=None, thread_ts=None, asker_id=None):
     client.chat_update(
         channel=channel,
         ts=ts,
-        blocks=build_task_card(question, status=status, results=results),
+        blocks=build_task_card(question, status=status, results=results,
+                                thread_ts=thread_ts, asker_id=asker_id),
         text=f"[{status}] {question}",
     )
 
@@ -56,29 +58,35 @@ def register_mention_handler(app):
 
         channel = event["channel"]
         thread_ts = event.get("thread_ts", event.get("ts"))
+        asker_id = event.get("user")
 
         # Post immediately so the user sees something right away.
         resp = say(
             channel=channel,
             thread_ts=thread_ts,
-            blocks=build_task_card(question_text, status="draft"),
+            blocks=build_task_card(question_text, status="draft",
+                                   thread_ts=thread_ts, asker_id=asker_id),
             text=f"[draft] {question_text}",
         )
         card_ts = resp["ts"]
 
-        _update_card(client, channel, card_ts, question_text, "ai_searching")
+        _update_card(client, channel, card_ts, question_text, "ai_searching",
+                     thread_ts=thread_ts, asker_id=asker_id)
 
         try:
             vault_results = _vault.search(question_text)
             entry_id = _vault.upsert_entry(question_text, channel, thread_ts)
         except Exception:
             logger.exception("Vault call failed; falling back to human_working.")
-            _update_card(client, channel, card_ts, question_text, "human_working")
+            _update_card(client, channel, card_ts, question_text, "human_working",
+                         thread_ts=thread_ts, asker_id=asker_id)
             return
 
         if vault_results:
             _vault.update_status(entry_id, "pending_confirm")
-            _update_card(client, channel, card_ts, question_text, "pending_confirm", results=vault_results)
+            _update_card(client, channel, card_ts, question_text, "pending_confirm",
+                         results=vault_results, thread_ts=thread_ts, asker_id=asker_id)
         else:
             _vault.update_status(entry_id, "human_working")
-            _update_card(client, channel, card_ts, question_text, "human_working")
+            _update_card(client, channel, card_ts, question_text, "human_working",
+                         thread_ts=thread_ts, asker_id=asker_id)

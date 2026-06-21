@@ -1,10 +1,18 @@
 """
 Builds the Block Kit representation of a task card.
-Every status in the Resolution Cycle has a distinct visual treatment —
-the card updates in place as it moves through states, not as separate messages.
+Card anatomy mirrors Diagram 3 — every state shows the same fields
+so reviewers always know what's happening and who acts next:
+
+  Task #[ID]
+  [Question]
+  ──────────
+  Owner: [who's responsible]   [X min ago]
+  [Next action note]
+  Status: [label]
 """
 
 import json
+import time
 from typing import Any, Optional
 
 STATUS_LABELS = {
@@ -17,6 +25,28 @@ STATUS_LABELS = {
     "escalate": "Escalated",
 }
 
+# Who is responsible at each state (mirrors Diagram 3 Status × Owner Mapping)
+_OWNERS = {
+    "draft": "—",
+    "ai_searching": "Mira AI",
+    "human_working": "Resolver",
+    "pending_confirm": None,   # filled dynamically from asker_id
+    "verified": "—",
+    "unconfirmed": "—",
+    "escalate": "Resolver",
+}
+
+# What happens next at each state (mirrors Diagram 3 action notes)
+_NEXT_ACTIONS = {
+    "draft": "Task created from a new question",
+    "ai_searching": "No human intervention needed yet",
+    "human_working": "Teammate is replying in the thread — Mira is listening",
+    "pending_confirm": "Confirm whether this answer resolved your issue",
+    "verified": "Verified answer — ready for reuse in the Knowledge Vault",
+    "unconfirmed": "Suggested answer — waiting for the next person to confirm",
+    "escalate": "New answer in progress — previous answer preserved in history",
+}
+
 _ANSWER_PREVIEW_LIMIT = 280
 
 
@@ -24,46 +54,58 @@ def build_task_card(
     question_text: str,
     status: str = "draft",
     results: Optional[list[dict[str, Any]]] = None,
+    thread_ts: Optional[str] = None,
+    asker_id: Optional[str] = None,
 ) -> list[dict]:
     status_label = STATUS_LABELS.get(status, status)
+    task_id = _task_id(thread_ts)
+    time_ago = _relative_time(thread_ts)
+
+    owner = _OWNERS.get(status, "—")
+    if status == "pending_confirm":
+        owner = f"<@{asker_id}>" if asker_id else "Requester"
+
+    next_action = _NEXT_ACTIONS.get(status, "")
 
     blocks: list[dict] = [
         {
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": f"*Question:*\n{question_text}"},
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": f"*{task_id}*"}],
         },
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*{question_text}*"},
+        },
+        {"type": "divider"},
     ]
 
-    if status == "ai_searching":
-        blocks.append({
-            "type": "context",
-            "elements": [{"type": "mrkdwn", "text": ":mag: Checking the Knowledge Vault and Slack history..."}],
-        })
-
-    elif status == "pending_confirm" and results:
+    # Answer content for states that surface a result
+    if status == "pending_confirm" and results:
+        blocks.extend(_pending_confirm_blocks(results[0], thread_ts, asker_id))
         blocks.append({"type": "divider"})
-        blocks.extend(_pending_confirm_blocks(results[0]))
-
     elif status == "verified" and results:
-        blocks.append({"type": "divider"})
         blocks.extend(_verified_blocks(results[0]))
-
-    elif status == "unconfirmed" and results:
         blocks.append({"type": "divider"})
+    elif status == "unconfirmed" and results:
         blocks.extend(_unconfirmed_blocks(results[0]))
+        blocks.append({"type": "divider"})
 
-    elif status == "human_working":
-        blocks.append({
-            "type": "context",
-            "elements": [{"type": "mrkdwn", "text": ":speech_balloon: No existing answer found — a teammate will follow up directly in this thread."}],
-        })
+    # Metadata row: owner (left) + time (right)
+    blocks.append({
+        "type": "section",
+        "fields": [
+            {"type": "mrkdwn", "text": f"*Owner*\n{owner}"},
+            {"type": "mrkdwn", "text": f"*{time_ago}*"},
+        ],
+    })
 
-    elif status == "escalate":
-        blocks.append({
-            "type": "context",
-            "elements": [{"type": "mrkdwn", "text": ":arrows_counterclockwise: Answer marked as not helpful — a teammate will take another look."}],
-        })
+    # Next action note
+    blocks.append({
+        "type": "context",
+        "elements": [{"type": "mrkdwn", "text": next_action}],
+    })
 
+    # Status footer
     blocks.append({
         "type": "context",
         "elements": [{"type": "mrkdwn", "text": f"Status: *{status_label}*"}],
@@ -72,26 +114,56 @@ def build_task_card(
     return blocks
 
 
+# ── helpers ──────────────────────────────────────────────────────────────────
+
+def _task_id(thread_ts: Optional[str]) -> str:
+    if not thread_ts:
+        return "#----"
+    return f"#{thread_ts.split('.')[0][-4:]}"
+
+
+def _relative_time(thread_ts: Optional[str]) -> str:
+    if not thread_ts:
+        return "just now"
+    try:
+        elapsed = time.time() - float(thread_ts)
+        if elapsed < 60:
+            return "just now"
+        if elapsed < 3600:
+            return f"{int(elapsed / 60)} min ago"
+        if elapsed < 86400:
+            return f"{int(elapsed / 3600)} hr ago"
+        return f"{int(elapsed / 86400)} days ago"
+    except (ValueError, TypeError):
+        return "just now"
+
+
 def _truncate(answer: str) -> str:
     if len(answer) > _ANSWER_PREVIEW_LIMIT:
         return answer[:_ANSWER_PREVIEW_LIMIT].rstrip() + "…"
     return answer
 
 
-def _button_value(result: dict[str, Any], answer: str) -> str:
-    # Encode both entry_id and answer so action handlers can rebuild the card
-    # without a second Vault lookup.
-    return json.dumps({"entry_id": result.get("entry_id", ""), "answer": answer})
+def _button_value(result: dict[str, Any], answer: str,
+                  thread_ts: Optional[str], asker_id: Optional[str]) -> str:
+    return json.dumps({
+        "entry_id": result.get("entry_id", ""),
+        "answer": answer,
+        "thread_ts": thread_ts or "",
+        "asker_id": asker_id or "",
+    })
 
 
-def _pending_confirm_blocks(result: dict[str, Any]) -> list[dict]:
+def _pending_confirm_blocks(result: dict[str, Any],
+                             thread_ts: Optional[str],
+                             asker_id: Optional[str]) -> list[dict]:
     answer = _truncate(result.get("answer", ""))
     confidence = result.get("confidence", 0)
-    confidence_text = f"{int(confidence * 100)}% confidence"
+    meta = f"{int(confidence * 100)}% confidence"
     if result.get("verified"):
-        confidence_text += " · :white_check_mark: previously verified"
+        meta += " · :white_check_mark: previously verified"
 
-    value = _button_value(result, answer)
+    value = _button_value(result, answer, thread_ts, asker_id)
 
     return [
         {
@@ -100,7 +172,7 @@ def _pending_confirm_blocks(result: dict[str, Any]) -> list[dict]:
         },
         {
             "type": "context",
-            "elements": [{"type": "mrkdwn", "text": confidence_text}],
+            "elements": [{"type": "mrkdwn", "text": meta}],
         },
         {
             "type": "actions",
@@ -129,7 +201,6 @@ def _verified_blocks(result: dict[str, Any]) -> list[dict]:
     meta = f"{int(result.get('confidence', 0) * 100)}% confidence"
     if owner:
         meta += f" · answered by <@{owner}>"
-
     return [
         {
             "type": "section",
@@ -144,7 +215,6 @@ def _verified_blocks(result: dict[str, Any]) -> list[dict]:
 
 def _unconfirmed_blocks(result: dict[str, Any]) -> list[dict]:
     answer = _truncate(result.get("answer", ""))
-
     return [
         {
             "type": "section",
