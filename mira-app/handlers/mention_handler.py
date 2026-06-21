@@ -31,12 +31,13 @@ def _strip_mention(raw_text: str) -> str:
 
 
 def _update_card(client, channel: str, ts: str, question: str, status: str,
-                 results=None, thread_ts=None, asker_id=None):
+                 results=None, thread_ts=None, asker_id=None, vault_hit=False):
     client.chat_update(
         channel=channel,
         ts=ts,
         blocks=build_task_card(question, status=status, results=results,
-                                thread_ts=thread_ts, asker_id=asker_id),
+                                thread_ts=thread_ts, asker_id=asker_id,
+                                vault_hit=vault_hit),
         text=f"[{status}] {question}",
     )
 
@@ -85,8 +86,9 @@ def register_mention_handler(app):
         if vault_results:
             _vault.update_status(entry_id, "pending_confirm")
             _update_card(client, channel, card_ts, question_text, "pending_confirm",
-                         results=vault_results, thread_ts=thread_ts, asker_id=asker_id)
+                         results=vault_results, thread_ts=thread_ts, asker_id=asker_id,
+                         vault_hit=True)
         else:
             _vault.update_status(entry_id, "human_working")
             _update_card(client, channel, card_ts, question_text, "human_working",
-                         thread_ts=thread_ts, asker_id=asker_id)
+                         thread_ts=thread_ts, asker_id=asker_id, vault_hit=False)

@@ -25,6 +25,7 @@ def register_action_handlers(app):
         answer = value.get("answer", "")
         thread_ts = value.get("thread_ts") or body["message"].get("thread_ts")
         asker_id = value.get("asker_id")
+        vault_hit = value.get("vault_hit", False)
         channel = body["channel"]["id"]
         message_ts = body["message"]["ts"]
         question_text = _extract_question(body)
@@ -43,6 +44,7 @@ def register_action_handlers(app):
                 results=[{"entry_id": entry_id, "answer": answer, "confidence": 0.95, "verified": True}],
                 thread_ts=thread_ts,
                 asker_id=asker_id,
+                vault_hit=vault_hit,
             ),
             text=f"[verified] {question_text}",
         )
@@ -58,6 +60,8 @@ def register_action_handlers(app):
         message_ts = body["message"]["ts"]
         question_text = _extract_question(body)
 
+        vault_hit = value.get("vault_hit", False)
+
         try:
             _vault.update_status(entry_id, "escalate")
         except Exception:
@@ -67,7 +71,8 @@ def register_action_handlers(app):
             channel=channel,
             ts=message_ts,
             blocks=build_task_card(question_text, status="escalate",
-                                   thread_ts=thread_ts, asker_id=asker_id),
+                                   thread_ts=thread_ts, asker_id=asker_id,
+                                   vault_hit=vault_hit),
             text=f"[escalate] {question_text}",
         )
 
