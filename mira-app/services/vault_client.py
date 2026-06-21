@@ -33,16 +33,18 @@ class VaultClient:
 
 
 def _stub_search(query: str) -> list[dict[str, Any]]:
-    # Non-empty so the pending_confirm path is reachable during local testing.
-    return [
-        {
-            "entry_id": "stub-001",
-            "question": query,
-            "answer": f"[STUB] This is a placeholder answer for: {query!r}",
-            "confidence": 0.91,
-            "verified": False,
-        }
-    ]
+    # Return [] to simulate cold start (human_working path).
+    # Return a result dict to test the pending_confirm path.
+    return []
+    # return [
+    #     {
+    #         "entry_id": "stub-001",
+    #         "question": query,
+    #         "answer": f"[STUB] Placeholder answer for: {query!r}",
+    #         "confidence": 0.91,
+    #         "verified": False,
+    #     }
+    # ]
 
 
 def _stub_upsert() -> str:
