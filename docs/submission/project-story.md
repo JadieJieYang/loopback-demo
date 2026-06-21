@@ -189,12 +189,39 @@ before the real Vault package is connected.
 
 ## Challenges we ran into
 
-*(Update as the build progresses — this section should reflect what
-actually happened, not what we expected to happen.)*
+**Designing a trust model that doesn't break under real human behavior.**
+The easy version of confirmation is a thumbs-up button in a 30-minute window.
+The problem is that most people don't respond to bots after their question is
+answered — they got what they needed and moved on. If silence equals failure,
+the Vault never fills. We had to design a system where silence is a weak
+positive signal, not a negative one, and where trust accumulates across
+independent encounters over time rather than depending on any single person
+responding in any single window.
 
-- TBD: interface contract negotiation between the two services
-- TBD: anything that came up during the independent build window
-- TBD: integration sprint surprises
+**Knowing when not to get involved.**
+Every Slack bot's failure mode is becoming a wall between people. We had to
+make an explicit architectural commitment — not just a stated preference —
+that Mira never relays messages between the requester and the resolver. The
+moment a real conversation is needed, she steps back and lets it happen
+directly. Enforcing that as a hard constraint, rather than a soft guideline,
+turned out to require more careful state machine design than we expected.
+
+**Locking an API contract across two people building in parallel.**
+The Knowledge Vault's storage and retrieval logic and Mira's conversational
+layer were built simultaneously by two people on separate schedules — including
+a period when one of us was traveling and genuinely unreachable. The only thing
+that kept the two sides from diverging was agreeing on an exact three-function
+interface before the independent build window opened, and treating that contract
+as fixed: any change required a conversation, not a unilateral edit.
+
+**The cold start problem — and why we chose not to solve it with fake data.**
+An empty Vault is correct behavior. Pre-seeding with unverified answers would
+undermine the core premise: every piece of knowledge in the Vault has provenance,
+a trail back to a real conversation, a real person who answered, and a real signal
+that the answer worked. Instead, the cold start is part of the demo — the first
+run shows the full resolution cycle, and the second identical question shows the
+Vault returning an answer in seconds. The cold start is the story, not a problem
+to hide.
 
 ---
 

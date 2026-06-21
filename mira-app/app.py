@@ -11,10 +11,12 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 from config import SLACK_BOT_TOKEN, SLACK_APP_TOKEN
 from handlers.mention_handler import register_mention_handler
+from handlers.action_handler import register_action_handlers
 
 app = App(token=SLACK_BOT_TOKEN)
 
 register_mention_handler(app)
+register_action_handlers(app)
 
 
 if __name__ == "__main__":

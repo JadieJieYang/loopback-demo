@@ -1,13 +1,59 @@
-# ARCHITECTURE.md
-
-System architecture for LoopBack. This is the technical structure
-reference — for product mechanism and design rationale, see
-`docs/implementation/DESIGN.md`. For day-by-day build status, see
-`docs/implementation-plan.md`.
+# LoopBack — Architecture
 
 ---
 
-## High-level overview
+## What LoopBack is
+
+**One-liner:** Every problem your organization solves should only ever need to be solved once.
+
+LoopBack is a Slack-native system built around two pieces working together:
+
+- **Mira** — the AI you `@` in Slack, just like a colleague. She understands intent, checks
+  the Knowledge Vault, searches Slack history, and escalates to a human only when genuinely needed.
+- **Knowledge Vault** — the growing, verified memory Mira builds from every conversation she
+  and a human resolve together.
+
+Mira does **not** sit between the requester and the resolver as a relay. They talk directly,
+in the same thread, exactly as they always have. Mira works alongside that conversation —
+checking for existing answers before a human needs to get involved, and documenting what
+happens afterward.
+
+---
+
+## The problem
+
+Every conversation in Slack disappears the moment the thread goes quiet. The person asking
+just wants to be unblocked; the person answering spends time explaining something they may
+have explained before. McKinsey data: knowledge workers spend ~20% of their workweek
+re-finding information someone else already knew.
+
+LoopBack's bet: knowledge doesn't need to be manually documented. It's produced constantly
+in Slack — it just needs to be captured at the moment it's created, verified by the person
+who created it, and made reusable.
+
+---
+
+## Core mechanism
+
+```
+User @ Mira with a question
+  → Mira understands intent (semantic, not keyword matching)
+  → Mira checks the Knowledge Vault FIRST (cheapest, fastest check)
+      → Vault has a verified answer → Mira replies instantly, done
+      → Vault has no answer → Mira searches Slack history
+          → History has a candidate → Mira surfaces it, asks a
+            clarifying question if needed to confirm it's the same problem
+          → Still nothing → Mira escalates: posts the task card to the resolver
+              → Resolver replies DIRECTLY to the requester, in the same thread
+                Mira does not relay — she listens in the background
+              → Once the exchange settles, Mira documents it, writes a Vault
+                entry, and follows up: "did this actually resolve it?"
+      → Answer verified → written to the Vault, ready for the next person
+```
+
+---
+
+## System overview
 
 ```
                          Slack Workspace
@@ -16,229 +62,231 @@ reference — for product mechanism and design rationale, see
 │                                                            │
 │   User/Requester ◄──────────────────────► Resolver/Owner  │
 │         │           (direct, in-thread)          ▲        │
-│         │                                          │        │
-│         ▼                                          │        │
-│   ┌─────────────┐                          ┌──────┴─────┐ │
-│   │   mira-app   │ ── escalates, listens ──►│  (Slack    │ │
-│   │   (Mira)     │                          │   thread)  │ │
-│   └──────┬───────┘                          └────────────┘ │
+│         │                                        │         │
+│         ▼                                        │         │
+│   ┌─────────────┐                        ┌───────┴────┐   │
+│   │  mira-app   │── escalates, listens ──►(Slack thread)  │
+│   │   (Mira)    │                        └────────────┘   │
+│   └──────┬──────┘                                         │
 │          │                                                  │
 └──────────┼──────────────────────────────────────────────────┘
-           │  API contract (3 functions, see docs/implementation/DESIGN.md)
+           │  API contract (3 functions — see below)
            ▼
    ┌──────────────────┐
-   │  vault-service     │
-   │  (Knowledge Vault) │
+   │  vault-service   │
+   │ (Knowledge Vault)│
    └──────────────────┘
            │
            ▼
    ┌──────────────────┐
-   │  Supabase          │
-   │  (PostgreSQL +     │
-   │   pgvector)         │
+   │    Supabase      │
+   │  (PostgreSQL +   │
+   │    pgvector)     │
    └──────────────────┘
 ```
 
-Two independently deployable services, talking to each other through a
-fixed API contract. Neither needs to know the other's internals.
+Two independently built services, talking through a fixed 3-function API contract.
+Neither needs to know the other's internals.
 
 ---
 
 ## Components
 
-### 1. `mira-app/` — the conversational layer
+### `mira-app/` — the conversational layer
 
 **Owns:** everything that happens inside Slack.
 
 ```
 mira-app/
 ├── app.py                  # entry point — starts the Bolt app (Socket Mode)
-├── config.py                # env var loading + validation
+├── config.py               # env var loading + validation
 ├── handlers/
-│   └── mention_handler.py   # listens for @Mira mentions, routes to services
+│   └── mention_handler.py  # @Mira event listener; drives the full card lifecycle
 ├── services/
-│   ├── intent.py             # Claude API — classifies question vs. noise
-│   ├── task_card.py          # builds Block Kit task card UI, per status
-│   └── vault_client.py       # Python wrapper around vault-service's 3 API functions
-│                              #   (Day 3-5 addition — imported directly, same process;
-│                              #   the rest of mira-app never talks to Supabase directly)
-└── dashboard/                # App Home — Knowledge Vault Dashboard UI
-    └── home_view.py           # (Week 3 addition)
+│   ├── intent.py           # Claude API — classifies question vs. noise
+│   ├── task_card.py        # Block Kit card builder for all statuses
+│   └── vault_client.py     # Python wrapper around vault-service's 3 API functions
+└── dashboard/
+    └── home_view.py        # App Home — Knowledge Vault Dashboard (Week 3)
 ```
 
-**Responsibilities:**
-- Receive Slack events (`app_mention`, message replies, reactions)
-- Classify intent (Claude API)
-- Call `vault-service` to check for an existing answer before doing
-  anything else (cost optimization — see `docs/implementation/DESIGN.md` § Why
-  Vault-first matters)
-- Search Slack history when the Vault has no match (Real-Time Search API)
-- Render and update the task card (Block Kit) as it moves through the
-  Resolution Cycle
-- Detect confirmation signals (reactions, reply text, silence/timers)
-- Render the Knowledge Vault Dashboard inside App Home
+**Responsibilities:** receive Slack events, classify intent, query the Vault, search Slack
+history, render and update the task card, detect confirmation signals, render the Dashboard.
 
-**Does NOT own:** embeddings, confidence scoring, the database schema, or
-any persistence logic. Mira talks to the Vault only through the three
-contract functions — see "API Contract" below.
+**Does NOT own:** embeddings, confidence scoring, the database schema, or any persistence.
+Mira talks to the Vault only through the three contract functions below.
 
 ---
 
-### 2. `vault-service/` — the storage and verification layer
+### `vault-service/` — the storage and verification layer
 
 **Owns:** everything related to persisting and retrieving knowledge.
 
 ```
 vault-service/
-├── schema.sql                # CREATE TABLE statements (task_cards, vault_entries)
-├── api/
-│   ├── search_vault.py        # semantic search against vault_entries
-│   ├── upsert_vault_entry.py  # writes/updates an entry, applies signal logic
-│   └── update_status.py       # simple status field update on task_cards
-├── embeddings.py               # OpenAI text-embedding-3-small wrapper
-├── confidence.py                # confidence scoring + accumulation logic
-└── requirements.txt
+├── schema.sql               # CREATE TABLE for task_cards + vault_entries
+├── embeddings.py            # OpenAI text-embedding-3-small wrapper
+├── confidence.py            # confidence scoring + accumulation logic
+└── api/
+    ├── search_vault.py      # semantic search against vault_entries
+    ├── upsert_vault_entry.py# writes/updates an entry, applies signal logic
+    └── update_status.py     # status field update on task_cards
 ```
 
-**Responsibilities:**
-- Own the two-table schema (`task_cards`, `vault_entries`) — see
-  `docs/implementation/DESIGN.md` § Data model for the exact fields
-- Generate embeddings for new questions and stored entries
-- Run cosine similarity search via pgvector
-- Implement the three-signal confidence logic and the two-tier
-  `unconfirmed` distinction (ambiguous reply vs. second silence)
-- Implement version history (push-on-update, never delete)
-- Expose exactly three functions to `mira-app` — nothing else should be
-  called across the boundary
+**Responsibilities:** own the schema, generate embeddings, run cosine similarity search,
+implement the three-signal confirmation logic, manage version history, expose exactly
+three functions to `mira-app`.
 
-**Does NOT own:** anything Slack-specific. This service has no idea what
-a thread, a mention, or a Block Kit card is — it only knows questions,
-answers, owners, and confidence.
+**Does NOT own:** anything Slack-specific. This service has no idea what a thread, a
+mention, or a Block Kit card is — it only knows questions, answers, owners, and confidence.
 
 ---
 
-### 3. Supabase (PostgreSQL + pgvector)
+### Supabase (PostgreSQL + pgvector)
 
-Hosted database. Both tables (`task_cards`, `vault_entries`) live here.
-`vault-service` is the only component that talks to Supabase directly —
-`mira-app` never queries the database; it only calls `vault-service`'s
-API functions.
+Hosted database. Both tables live here. `vault-service` is the only component that talks
+to Supabase directly — `mira-app` never queries the database.
 
 ---
 
-## The API contract (the seam between the two services)
+## API contract
 
-This is intentionally the **only** coupling point between `mira-app` and
-`vault-service`. Full input/output shapes are documented in
-`docs/implementation/DESIGN.md` § API contract — summarized here for the architectural
-view:
+The **only** coupling point between the two services. Changing any of these signatures
+requires agreement from both team members — not a unilateral edit.
+
+### `search_vault(query_text)`
 
 ```
-search_vault(query_text)
-  → does a verified or suggested answer already exist?
+Input:  query_text: str
 
-upsert_vault_entry(task_card_id, answer, owner_id, signal)
-  → writes a new resolution into the Vault, applies signal/confidence logic
-
-update_status(task_card_id, new_status)
-  → updates a task card's lifecycle status
+Returns:
+{
+  match_found: boolean,
+  entry_id:    uuid | null,
+  answer:      string | null,
+  owner_id:    string | null,
+  confidence:  float,           // 0–1
+  last_confirmed_at: string | null
+}
 ```
 
-If this contract needs to change, that's a conversation between both
-people working on the project — not a unilateral edit on either side.
+Confidence thresholds: `> 0.85` = return instantly · `0.7–0.85` = ask a clarifying
+question first · `< 0.7` = treat as no match.
+
+### `upsert_vault_entry(task_card_id, answer, owner_id, signal)`
+
+```
+Input:
+{
+  task_card_id:       uuid,
+  question_canonical: string,
+  answer:             string,
+  owner_id:           string,
+  signal:             'signal_1' | 'signal_2' | 'signal_3'
+}
+
+Returns:
+{
+  entry_id:        uuid,
+  status:          'verified' | 'unconfirmed' | 'outdated',
+  confidence_score: float
+}
+```
+
+### `update_status(task_card_id, new_status)`
+
+```
+Input:   { task_card_id: uuid, new_status: string }
+Returns: { success: boolean, updated_at: string }
+```
 
 ---
 
-## Data flow: one full resolution cycle
+## Data flow — one full resolution cycle
 
 ```
 1. User @ Mira with a question
         │
         ▼
-2. mira-app: intent.classify_intent() → question or noise?
-        │ (question)
+2. intent.classify_intent() → QUESTION or NOISE
+        │ (QUESTION)
         ▼
-3. mira-app: vault_client.search_vault(query)
+3. vault_client.search_vault(query)
         │
-        ├── match_found = true, confidence > 0.85
-        │       └──► mira-app renders Verified Answer card → DONE
+        ├── confidence > 0.85 ──► render Verified Answer card → DONE
         │
-        └── match_found = false (or low confidence)
+        ├── 0.7–0.85 ──────────► ask clarifying question, confirm same problem
+        │
+        └── < 0.7 (no match)
                 │
                 ▼
-        4. mira-app searches Slack history (Real-Time Search API)
+        4. Search Slack history (Real-Time Search API)
                 │
-                ├── candidate found
-                │       └──► mira-app asks a clarifying question
+                ├── candidate found ──► surface it, ask clarifying question
                 │
                 └── nothing found
                         │
                         ▼
-                5. mira-app posts task card to resolver, status → human_working
+                5. Post task card → status: human_working
                         │
                         ▼
                 6. Resolver replies DIRECTLY to requester in-thread
-                   (mira-app is listening, not relaying)
+                   (Mira listens, does not relay)
                         │
                         ▼
-                7. mira-app detects resolution signal, status → pending_confirm
+                7. Mira detects resolution → status: pending_confirm
                         │
                         ▼
-                8. 30-min window: signal 1 / 2 / 3 (see docs/implementation/DESIGN.md)
+                8. 30-min confirmation window opens (signal 1 / 2 / 3)
                         │
                         ▼
-                9. mira-app calls vault_client.upsert_vault_entry(...)
+                9. vault_client.upsert_vault_entry(...)
                         │
                         ▼
-                10. vault-service applies confidence logic, writes the
-                    entry, returns the new status
+                10. vault-service applies confidence logic, writes entry
                         │
                         ▼
-                11. mira-app updates the task card to reflect final status
+                11. Task card updates to final status (verified / unconfirmed)
 ```
+
+For the detailed logic behind steps 7–10 (signal definitions, confidence accumulation,
+two-tier unconfirmed), see `docs/implementation/DESIGN.md`.
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|-------|-----------|
+| Bot framework | Slack Bolt for Python |
+| LLM — intent, extraction, clarifying questions | Claude (`claude-sonnet-4-6`) |
+| Embeddings — semantic search | OpenAI `text-embedding-3-small` |
+| Database | Supabase (PostgreSQL + pgvector) |
+| UI | Slack Block Kit — task cards + App Home Dashboard (no external frontend) |
+| History search | Slack Real-Time Search API |
+| Hosting | Railway |
 
 ---
 
 ## Deployment
 
 ```
-mira-app/       → Railway (Slack Bolt app, Socket Mode for dev,
-                   HTTP mode once deployed)
-vault-service/  → Python package imported directly by mira-app in the
-                   same process (resolved during Week 1 contract lock-in;
-                   chosen for simplicity under hackathon time constraints)
-Supabase        → hosted, free tier
+mira-app/      → Railway (Socket Mode for dev, HTTP mode once deployed)
+vault-service/ → Python package imported directly by mira-app in the same process
+Supabase       → hosted, free tier
 ```
 
 ---
 
-## Tech stack summary
+## Why this split
 
-| Layer | Technology |
-|---|---|
-| Bot framework | Slack Bolt for Python |
-| LLM (intent, extraction, clarifying questions) | Claude (claude-sonnet-4-6) |
-| Embeddings (semantic search) | OpenAI text-embedding-3-small |
-| Database | Supabase (PostgreSQL + pgvector) |
-| UI | Slack Block Kit (task cards) + App Home (Dashboard) — no external frontend |
-| Search | Slack Real-Time Search API (history search) |
-| Hosting | Railway |
+The `mira-app` / `vault-service` boundary isn't just a convenient way to divide work —
+it mirrors a real product boundary:
 
----
+- `mira-app` is about **conversation** — understanding what's being asked, talking to
+  people, deciding when to step back and let humans talk directly.
+- `vault-service` is about **trust** — deciding whether an answer is reliable enough
+  to return instantly, and how that trust builds or decays over time.
 
-## Why this split (not just "who's doing what")
-
-The `mira-app` / `vault-service` boundary isn't just a convenient way to
-divide work between two people — it mirrors a real product boundary:
-
-- `mira-app` is about **conversation** — understanding what's being
-  asked, talking to people, deciding when to step back and let humans
-  talk directly.
-- `vault-service` is about **trust** — deciding whether an answer is
-  reliable enough to hand back instantly, and how that trust builds or
-  decays over time.
-
-Keeping these separate means either piece can be reasoned about, tested,
-and improved without needing to understand the other's internals — which
-is also why the two of us could build them in parallel, including during
-the week one of us was traveling.
+Keeping these separate means either piece can be built, tested, and reasoned about without
+needing to understand the other's internals.
