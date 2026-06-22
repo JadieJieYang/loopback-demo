@@ -11,14 +11,26 @@ Add SLACK_USER_TOKEN to .env to enable; if absent, search is skipped silently.
 
 import logging
 import os
+import re
 from typing import Any
 
 from slack_sdk import WebClient
 
 logger = logging.getLogger(__name__)
 
+
+def _is_valid_answer(text: str) -> bool:
+    if len(text) < _MIN_ANSWER_LENGTH:
+        return False
+    if re.search(_BOT_MENTION_PATTERN, text):
+        return False
+    if text.strip().endswith("?"):
+        return False
+    return True
+
 _SLACK_USER_TOKEN = os.environ.get("SLACK_USER_TOKEN", "")
-_MIN_ANSWER_LENGTH = 30  # skip very short messages that are unlikely to be answers
+_MIN_ANSWER_LENGTH = 40  # skip very short messages that are unlikely to be answers
+_BOT_MENTION_PATTERN = r"<@[A-Z0-9]+>"  # skip messages that are directed at a bot
 
 
 def search_slack_history(query: str, count: int = 3) -> list[dict[str, Any]]:
@@ -44,7 +56,7 @@ def search_slack_history(query: str, count: int = 3) -> list[dict[str, Any]]:
                 "channel_name": m.get("channel", {}).get("name", ""),
             }
             for m in matches
-            if len(m.get("text", "")) >= _MIN_ANSWER_LENGTH
+            if _is_valid_answer(m.get("text", ""))
         ]
     except Exception:
         logger.warning("Slack history search failed", exc_info=True)
