@@ -11,6 +11,7 @@ import json
 
 from services.task_card import build_task_card
 from services.vault_client import VaultClient
+from handlers.resolution_handler import register_active_thread
 
 _vault = VaultClient()
 
@@ -83,6 +84,17 @@ def register_action_handlers(app):
                                    vault_hit=vault_hit),
             text=f"[escalate] {question_text}",
         )
+
+        # Re-register thread so Mira keeps listening for a second resolver attempt
+        if thread_ts:
+            register_active_thread(
+                thread_ts=thread_ts,
+                card_ts=message_ts,
+                channel=channel,
+                question_text=question_text,
+                asker_id=asker_id or "",
+                task_card_id=task_card_id,
+            )
 
 
 def _parse_value(body: dict) -> dict:
