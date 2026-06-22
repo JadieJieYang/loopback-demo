@@ -97,19 +97,19 @@ def _stub_entries() -> list[dict[str, Any]]:
 def _stub_search(query: str) -> dict[str, Any]:
     # Returns no match by default → triggers human_working path.
     # Swap to the commented block below to test the vault hit path.
-    # return {
-    #     "match_found": False,
-    #     "entry_id": None,
-    #     "answer": None,
-    #     "owner_id": None,
-    #     "confidence": 0.0,
-    #     "last_confirmed_at": None,
-    # }
     return {
-        "match_found": True,
-        "entry_id": "stub-001",
-        "answer": "Submit your PTO via Workday at least 3 business days in advance.",
-        "owner_id": "U_STUB_OWNER",
-        "confidence": 0.91,
+        "match_found": False,
+        "entry_id": None,
+        "answer": None,
+        "owner_id": None,
+        "confidence": 0.0,
         "last_confirmed_at": None,
     }
+    # return {
+    #     "match_found": True,
+    #     "entry_id": "stub-001",
+    #     "answer": "Submit your PTO via Workday at least 3 business days in advance.",
+    #     "owner_id": "U_STUB_OWNER",
+    #     "confidence": 0.91,
+    #     "last_confirmed_at": None,
+    # }
