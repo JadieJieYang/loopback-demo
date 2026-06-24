@@ -27,8 +27,8 @@ _openai = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 # ── confidence constants (see DESIGN.md § Confidence accumulation) ────────────
 
-_HIGH_MATCH = 0.85   # return answer immediately above this similarity
-_LOW_MATCH  = 0.70   # below this → treat as no match
+_HIGH_MATCH = 0.70   # return answer immediately above this similarity
+_LOW_MATCH  = 0.45   # below this → treat as no match
 
 _INITIAL_SCORES = {
     "signal_1":           0.90,  # clear confirmation from requester
