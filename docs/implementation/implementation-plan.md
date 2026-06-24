@@ -46,9 +46,9 @@ blocking the other.
 - [x] Draft task card Block Kit template (draft status only)
 
 #### Day 1–2 (6/20–6/21) — Jie: Vault skeleton
-- [ ] Create Supabase project, enable pgvector extension
-- [ ] Run CREATE TABLE statements for `task_cards` and `vault_entries`
-- [ ] Draft the API contract: `search_vault`, `upsert_vault_entry`, `update_status`
+- [x] Create Supabase project, enable pgvector extension
+- [x] Run CREATE TABLE statements for `task_cards` and `vault_entries`
+- [x] Draft the API contract: `search_vault`, `upsert_vault_entry`, `update_status`
 
 #### Day 3 (6/22) — Both: Lock the interface
 - [ ] Walk through all three API functions together, line by line
