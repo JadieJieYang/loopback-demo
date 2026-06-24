@@ -287,4 +287,17 @@ def create_task_card(
     return card_id
 
 
-__all__ = ["create_task_card", "search_vault", "upsert_vault_entry", "update_status"]
+def list_vault_entries(limit: int = 20) -> list[dict]:
+    """Return recent verified and unconfirmed vault entries for the Dashboard."""
+    result = (
+        _supabase.table("vault_entries")
+        .select("*")
+        .in_("status", ["verified", "unconfirmed"])
+        .order("updated_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return result.data or []
+
+
+__all__ = ["create_task_card", "search_vault", "upsert_vault_entry", "update_status", "list_vault_entries"]

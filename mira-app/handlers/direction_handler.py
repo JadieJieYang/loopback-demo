@@ -49,66 +49,52 @@ def register_direction_check(
 def register_direction_handler(app, bot_user_id: str) -> None:
     from handlers.resolution_handler import register_active_thread
 
-    @app.event("message", matchers=[_is_direction_reply])
+    @app.event("message")
     def handle_direction_reply(event, client, logger):
         thread_ts = event.get("thread_ts")
-        user = event.get("user", "")
-        text = event.get("text", "")
-
         if not thread_ts or thread_ts not in _direction_threads:
             return
-        if user == bot_user_id or event.get("subtype"):
+
+        user = event.get("user", "")
+        if not user or user == bot_user_id or event.get("subtype"):
             return
 
         task = _direction_threads[thread_ts]
 
-        # Only the original requester's reply counts for direction confirmation
         if user != task["asker_id"]:
             return
 
+        text = event.get("text", "")
         if not _POSITIVE_PATTERNS.search(text):
-            # Not a clear confirmation — let them keep talking
             return
 
-        # Confirmed direction — escalate to resolver with context
         task_data = _direction_threads.pop(thread_ts)
-        _escalate_with_context(client, logger, task_data, thread_ts)
 
-    def _escalate_with_context(client, logger, task, thread_ts):
         try:
-            _vault.update_status(task["task_card_id"], "human_working")
+            _vault.update_status(task_data["task_card_id"], "human_working")
         except Exception:
             logger.exception("Failed to update status after direction confirmed")
 
         client.chat_update(
-            channel=task["channel"],
-            ts=task["card_ts"],
+            channel=task_data["channel"],
+            ts=task_data["card_ts"],
             blocks=build_task_card(
-                task["question_text"],
+                task_data["question_text"],
                 status="human_working",
                 thread_ts=thread_ts,
-                asker_id=task["asker_id"],
-                context_summary=task["context_summary"],
+                asker_id=task_data["asker_id"],
+                context_summary=task_data["context_summary"],
             ),
-            text=f"[human_working] {task['question_text']}",
+            text=f"[human_working] {task_data['question_text']}",
         )
 
-        # Register for resolution detection
-        from handlers.resolution_handler import register_active_thread
         register_active_thread(
             thread_ts=thread_ts,
-            card_ts=task["card_ts"],
-            channel=task["channel"],
-            question_text=task["question_text"],
-            asker_id=task["asker_id"],
-            task_card_id=task["task_card_id"],
+            card_ts=task_data["card_ts"],
+            channel=task_data["channel"],
+            question_text=task_data["question_text"],
+            asker_id=task_data["asker_id"],
+            task_card_id=task_data["task_card_id"],
         )
 
-        logger.info(f"Direction confirmed for thread {thread_ts}, escalating to resolver")
-
-
-def _is_direction_reply(event) -> bool:
-    return (
-        event.get("thread_ts") in _direction_threads
-        and not event.get("subtype")
-    )
+        logger.info(f"Direction confirmed in {thread_ts}, escalating to resolver")
