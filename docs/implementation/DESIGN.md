@@ -269,6 +269,9 @@ This is what makes Mira a genuine agent, not a scripted chatbot.
 **After (agentic):** Claude receives question + tool list → Claude decides what to search
 → multi-round investigation → Claude synthesizes its own findings
 
+**Status: ✅ Implemented** in `mira-app/services/investigator.py`.
+`mention_handler.py` now calls `investigate(question)` for all Tier 2 work.
+
 ### Auto-save via 3 signals (no resolver action required)
 The original three-signal mechanism is preserved and is the only path into the Vault.
 Resolvers do not need to click anything — Mira handles everything automatically based
