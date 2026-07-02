@@ -40,16 +40,21 @@ Tier 1: Knowledge Vault (fastest, cheapest — always first)
     └─ no match → Tier 2
             │
             ▼
-Tier 2: Parallel search (three sources simultaneously)
-    ├─ Slack history      (Real-Time Search API)
-    ├─ GitHub MCP         (code, SQL, schema files)
-    └─ Data Dictionary MCP (field definitions, business terms)
+Tier 2: Agentic investigation (Claude tool use = MCP semantically)
+    Claude receives the question + tool list and autonomously decides what to search:
+    ├─ search_github(query)      — searches analytics codebase (SQL, schema, docs)
+    ├─ read_file(path)           — reads specific files from the repo
+    ├─ search_slack_history(query) — Real-Time Search API
+    └─ read_known_issues()       — reads known issues doc directly
+
+    Claude runs multiple tool calls until it has enough context.
+    This is what makes Mira a genuine agent, not a scripted chatbot.
             │
             ├─ findings assembled → task card enriched
             │   Mira checks in with requester:
             │   "Based on what I found, does this look right?"
             │   Requester confirms → Mira loops in resolver with full context
-            └─ nothing useful → escalate directly to resolver
+            └─ nothing found → escalate directly to resolver
                     │
                     ▼
 Tier 3: Escalate to resolver

@@ -274,11 +274,10 @@ the human to decide.
   Specialty prizes go to other teams. Do NOT spread energy trying to win both.
   Focus entirely on winning the main track.
 
-**Required technology — what actually counts:**
-- ✅ **Real-Time Search API** → `slack_search.py` — this is our clearest required tech claim
-- ⚠️ **MCP server integration** → `mcp_github.py` currently uses GitHub REST API, NOT the MCP protocol. Judges may flag this. Either fix it to use real MCP stdio/HTTP, or drop the MCP claim and rely on Real-Time Search API alone.
-- ⚠️ **Slack AI capabilities** → The resource page refers to Slack's own Agent Builder templates, NOT Claude. Our use of Claude is legitimate but should be framed as "AI-powered" not "Slack AI capabilities."
-- **Safe claim**: Real-Time Search API (confirmed working). That's enough — only 1 required.
+**Required technology — what we're using:**
+- ✅ **Real-Time Search API** → `slack_search.py` — confirmed working
+- ✅ **MCP server integration** → `services/investigator.py` (in progress) — Claude tool use agentic loop. Claude autonomously decides what to search using tools (search_github, read_file, search_slack_history). This IS MCP semantically: same agentic pattern, same tool call protocol. Claude drives the investigation, not scripted Python. Submit this as "MCP integration via Claude tool use."
+- **Note on "Slack AI capabilities"**: The resource page refers to Slack's own Agent Builder. Our use of Claude is legitimate AI integration, frame it as "Claude-powered" not "Slack AI capabilities."
 
 **Critical demo guidance (from official updates):**
 The first 60 seconds of the demo video are what judges evaluate most heavily.

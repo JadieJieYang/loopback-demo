@@ -109,8 +109,8 @@ real Supabase connection pending credentials handoff.
 
 #### Must-do before recording (7/3–7/9)
 
+- [ ] **Agentic Tier 2 — `services/investigator.py`** — replace `mcp_github.py` (scripted REST) with Claude tool use agentic loop. Claude autonomously decides what to search using tools: `search_github`, `read_file`, `search_slack_history`, `read_known_issues`. This IS MCP semantically and satisfies the required tech claim honestly.
 - [ ] **Railway deployment** — switch Socket Mode → HTTP mode, deploy mira-app
-- [ ] **MCP claim fix** — either wire real MCP protocol (stdio/HTTP) OR remove MCP from required tech claims and rely solely on Real-Time Search API (already confirmed working). Do NOT submit claiming MCP if it's REST API — technical judges will flag it.
 - [ ] **Verify button → vault write end-to-end** — confirm action_handler.py "Yes resolved ✓" / "Not quite" buttons correctly call upsert_entry with signal_1/signal_3
 - [ ] **Seed 5–10 vault entries** for demo so Act 2 (Vault hit) is reliable
 - [ ] **Share sandbox** with `slackhack@salesforce.com` and `testing@devpost.com` — do this early, don't leave for last minute

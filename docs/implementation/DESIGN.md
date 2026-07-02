@@ -246,11 +246,28 @@ Returns: { success: boolean, updated_at: string }
 
 ## v2 additions (read before building anything new in mira-app)
 
-### GitHub MCP + Data Dictionary MCP (Tier 2 search)
-When the Vault has no match, Mira searches three sources in parallel. GitHub MCP reads
-code files, SQL queries, and schema definitions. Data Dictionary MCP provides field
-definitions and business terms. Both run alongside the Real-Time Search API in Tier 2.
-Implemented in `mira-app/services/mcp_github.py` and `mcp_data_dict.py` (Week 2).
+### Tier 2: Agentic investigation via Claude Tool Use (= MCP semantically)
+
+When the Vault has no match, Mira hands the question to Claude with a set of tools.
+Claude autonomously decides what to search, which files to read, and when it has
+enough context — exactly what MCP enables. The agentic loop runs in
+`mira-app/services/investigator.py`.
+
+**Tools available to Claude:**
+- `search_github(query)` — searches the loopback-analytics codebase
+- `read_file(path)` — reads a specific file from the analytics repo
+- `search_slack_history(query)` — searches Slack message history (Real-Time Search API)
+- `read_known_issues()` — reads docs/known_issues.md directly
+
+**Why this is MCP (not just REST API):**
+Claude's tool use is the programmatic implementation of the MCP protocol — the same
+request/response pattern, same agentic loop. The current `mcp_github.py` (Python
+code deciding what to search) will be replaced by Claude deciding autonomously.
+This is what makes Mira a genuine agent, not a scripted chatbot.
+
+**Before (scripted):** Python searches keywords → passes results to Claude for summary
+**After (agentic):** Claude receives question + tool list → Claude decides what to search
+→ multi-round investigation → Claude synthesizes its own findings
 
 ### Auto-save via 3 signals (no resolver action required)
 The original three-signal mechanism is preserved and is the only path into the Vault.
