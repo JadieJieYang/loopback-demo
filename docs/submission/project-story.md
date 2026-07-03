@@ -224,14 +224,28 @@ to hide.
 
 ## What's next for LoopBack
 
-The Knowledge Vault doesn't just store what was solved. Over time, it
-could store how the organization thinks — the dimensions considered,
-the sequence followed, the judgment calls made when a problem doesn't
-fit a known category. As the Vault grows, Mira could learn what
-clarifying questions an expert always asks before they even show up —
-so by the time a human is needed, the problem is already half-diagnosed.
+**Multi-channel knowledge scoping.**
+The current Vault is validated in a single-channel context. Scaling to multiple
+channels and organizations requires a scoped knowledge model: by default, knowledge
+is private to the channel where it was created — so #data-support answers don't
+surface in #hr-support, and Mira can recognize when a question falls outside a
+channel's knowledge domain and redirect rather than answer incorrectly.
 
-That's not in scope for this submission, but it's the direction the
+The right model is layered: channel-scoped knowledge first, with the ability to
+"promote" an answer to organization-wide scope after it's been independently verified
+across multiple channels. This prevents cross-department knowledge contamination
+while preserving the value of genuinely universal answers. It also opens the door to
+Mira understanding her context — knowing she's in a data team's channel, not an HR
+channel, and adjusting her behavior accordingly.
+
+**Organizational reasoning over time.**
+The Knowledge Vault doesn't just store what was solved. Over time, it could store
+how the organization thinks — the dimensions considered, the sequence followed, the
+judgment calls made when a problem doesn't fit a known category. As the Vault grows,
+Mira could learn what clarifying questions an expert always asks before they even
+show up — so by the time a human is needed, the problem is already half-diagnosed.
+
+Neither of these is in scope for this submission, but they are the directions the
 underlying mechanism points toward.
 
 ---
