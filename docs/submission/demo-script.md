@@ -11,10 +11,11 @@
 | Time | Section | What it shows | Diagram state |
 |------|---------|---------------|---------------|
 | 0:00–0:30 | Intro | Problem + product in 30 seconds | Empty loop |
-| 0:30–1:10 | Act 1 — Cold start | AI-human in a loop, Mira listens not relays | Cold start path added |
-| 1:10–1:50 | Act 2 — Vault hit | Knowledge Vault payoff, semantic search | Vault shortcut path added |
-| 1:50–2:40 | Act 3 — Channel Insights | Patterns → product fixes | Enhancement loop added |
-| 2:40–3:00 | Closing | Complete loop revealed | Full loop |
+| 0:30–0:50 | Ambient moment | Mira captures knowledge without @mention | — |
+| 0:50–1:25 | Act 1 — Cold start | AI-human in a loop, GitHub investigation | Cold start path added |
+| 1:25–2:00 | Act 2 — Vault hit | Knowledge Vault payoff, semantic search | Vault shortcut path added |
+| 2:00–2:45 | Act 3 — Channel Insights | Patterns → product fixes | Enhancement loop added |
+| 2:45–3:00 | Closing | Complete loop revealed | Full loop |
 
 ---
 
@@ -34,7 +35,31 @@ Show: LoopBack logo · tagline · then cut to Slack
 
 ---
 
-## Act 1 — Cold start (0:30–1:10)
+## Ambient moment (0:30–0:50)
+
+**What this shows:** Mira captures knowledge from a normal conversation — no @mention needed.
+This sets up the "zero-maintenance" promise before the technical demo begins.
+
+**Script:**
+1. Jie (as BA) posts a normal message, no @Mira:
+   `why is the approval data off this morning?`
+2. Jinqiu replies in thread:
+   `NULL product_type values are skewing the numbers — use WHERE product_type IS NOT NULL`
+3. Jie replies: `got it, thanks!`
+4. Mira appears in the thread automatically:
+   > *"Looks like this was resolved! Want me to save it to the Knowledge Vault?"*
+   > [Save it ✓] [No thanks]
+5. Jie clicks **Save it ✓**
+6. Mira: *"Saved to the Knowledge Vault ✓"*
+
+**Narration:**
+> "LoopBack doesn't require your team to change their workflow.
+> Mira watches in the background — when a question gets resolved, she asks if it's worth saving.
+> No @mention. No extra steps."
+
+---
+
+## Act 1 — Cold start (0:50–1:25)
 
 **What this shows:** Mira investigates autonomously, confirms direction, steps back so humans talk directly. AI-human in a loop — Mira is the listener, not the relay.
 
@@ -72,7 +97,7 @@ Show: LoopBack logo · tagline · then cut to Slack
 
 ---
 
-## Act 2 — Vault hit (1:10–1:50)
+## Act 2 — Vault hit (1:25–2:00)
 
 **What this shows:** Same root cause, different person, different words. Knowledge Vault returns the answer in seconds. Semantic understanding, not keyword matching.
 
@@ -101,7 +126,7 @@ Show: LoopBack logo · tagline · then cut to Slack
 
 ---
 
-## Act 3 — Channel Insights (1:50–2:40)
+## Act 3 — Channel Insights (2:00–2:45)
 
 **What this shows:** Questions accumulate → Mira sees a pattern → Enhancement Opportunity.
 The loop closes: support becomes product backlog.
@@ -139,7 +164,7 @@ Claude identifies the pattern and proposes a fix.
 
 ---
 
-## Closing (2:40–3:00)
+## Closing (2:45–3:00)
 
 **Reveal the complete loop diagram** — all three paths now lit up together.
 

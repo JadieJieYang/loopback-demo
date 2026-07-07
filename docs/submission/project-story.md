@@ -95,6 +95,13 @@ answer is saved as "Suggested, not yet verified," waiting for the next person to
 first to confirm it. A clear denial routes back to the resolver, with the old answer
 preserved in version history so nothing is ever silently overwritten.
 
+**Ambient capture — no @mention required.** Mira also monitors threads passively. When
+the original asker signals resolution ("got it", "thanks", "makes sense") in a thread
+she was never tagged in, Mira surfaces a one-tap prompt: *"Looks like this was resolved —
+want me to save it?"* This means knowledge created in completely organic conversations
+— ones that never involved Mira — can still enter the Vault. Teams don't need to change
+how they work. Mira fits around them.
+
 Every verified answer becomes a Knowledge Vault entry. Every entry carries the full trail:
 the original question, what Mira searched, who answered, and every signal that built the
 trust score. The next time anyone asks — even in completely different words — Mira
