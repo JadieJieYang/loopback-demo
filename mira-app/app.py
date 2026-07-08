@@ -29,5 +29,5 @@ if __name__ == "__main__":
     register_resolution_handler(app, bot_user_id)
 
     handler = SocketModeHandler(app, SLACK_APP_TOKEN)
-    print(f"Mira is running (bot_user_id={bot_user_id}). Waiting for @ mentions...")
+    print(f"Mira is running (bot_user_id={bot_user_id}). Listening to all channels...")
     handler.start()
