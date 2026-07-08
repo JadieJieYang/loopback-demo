@@ -70,7 +70,10 @@ Jie clicks **Save it ✓** → Mira: *"Saved to the Knowledge Vault ✓"*
 
 ## Act 1 — Cold start (0:50–1:25)
 
-**What this shows:** Mira investigates the codebase autonomously, confirms direction before escalating, then steps back. AI-human in a loop — Mira listens, never relays.
+**Transition from ambient:**
+> *"But what about a problem nobody has solved before — one that needs real investigation, not just saving an existing answer?"*
+
+**What this shows:** When the answer doesn't exist yet, @Mira triggers active investigation — Mira reads the codebase, finds the root cause, confirms direction, then steps back. AI-human in a loop — Mira listens, never relays.
 
 **Exact messages:**
 
