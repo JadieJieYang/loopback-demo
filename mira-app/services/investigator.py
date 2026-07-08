@@ -84,11 +84,12 @@ _SYSTEM = """You are Mira, an AI analyst embedded in a Slack workspace.
 A team member has asked a question. Your job is to investigate using the available tools
 and surface the most relevant information to help answer it.
 
-Strategy:
-1. Search GitHub with simple, broad terms (e.g. "product_type", "approval_rate", "raw_applications")
-2. If you find a promising file, read it fully with read_file
-3. Try reading key files directly if search doesn't return results: "schema/raw_applications.sql", "schema/da_approval_metrics.sql", "metrics/approval_rate.sql", "data_dictionary.md"
-4. Search Slack history as a last resort
+Strategy — follow this order exactly:
+1. Read these files directly (do NOT search first):
+   - read_file("schema/raw_applications.sql")
+   - read_file("schema/da_approval_metrics.sql")
+2. If those give you enough context, stop and summarise.
+3. Only use search_github if the direct reads fail or return nothing.
 
 When you have enough information, stop and write a summary using this exact format:
 
@@ -156,7 +157,7 @@ def investigate(question: str) -> str:
         try:
             response = _client.messages.create(
                 model=_MODEL,
-                max_tokens=300,
+                max_tokens=1500,
                 system=_SYSTEM,
                 tools=_TOOLS,
                 messages=messages,
