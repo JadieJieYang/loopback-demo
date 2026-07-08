@@ -83,3 +83,39 @@ def classify_resolution(message_text: str) -> bool:
         label = "ONGOING"
 
     return label.startswith("RESOLVED")
+
+
+_DIRECTION_RESPONSE_PROMPT = """Mira (an AI) posted investigation findings in a Slack thread \
+and asked the original asker: "Does this look right?" The asker has now replied.
+
+Classify the reply as exactly one of:
+ESCALATE — asker wants a human to investigate or confirm \
+(e.g. "yes", "correct", "please loop someone in", "yes escalate", "yes get the DE")
+RESOLVED — asker's question is already answered by Mira's findings, no human needed \
+(e.g. "makes sense thanks", "got it!", "that explains it", "that answers it")
+UNCLEAR  — not enough signal (e.g. "maybe", "hmm", a new question)
+
+Respond with exactly one word: ESCALATE, RESOLVED, or UNCLEAR. Nothing else."""
+
+
+def classify_direction_response(message_text: str) -> str:
+    """
+    Classify asker's reply to a direction check.
+    Returns: 'ESCALATE' | 'RESOLVED' | 'UNCLEAR'
+    """
+    try:
+        response = _client.messages.create(
+            model=_MODEL,
+            max_tokens=10,
+            system=_DIRECTION_RESPONSE_PROMPT,
+            messages=[{"role": "user", "content": message_text}],
+        )
+        label = response.content[0].text.strip().upper()
+    except Exception:
+        label = "UNCLEAR"
+
+    if "ESCALATE" in label:
+        return "ESCALATE"
+    if "RESOLVED" in label:
+        return "RESOLVED"
+    return "UNCLEAR"

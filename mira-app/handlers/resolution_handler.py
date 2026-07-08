@@ -12,7 +12,7 @@ This is the zero-@mention flow: teams work normally, Mira handles everything.
 import json
 import re
 
-from services.intent import classify_intent, classify_resolution
+from services.intent import classify_intent, classify_resolution, classify_direction_response
 from services.task_card import build_task_card
 from services.vault_client import VaultClient
 
@@ -87,8 +87,9 @@ def register_resolution_handler(app, bot_user_id: str) -> None:
             if user != task["asker_id"]:
                 return
 
-            # "yes / correct / right" → direction confirmed, loop in resolver (highest priority)
-            if _POSITIVE_PATTERNS.search(text):
+            direction = classify_direction_response(text)
+
+            if direction == "ESCALATE":
                 task_data = _direction_threads.pop(thread_ts)
                 logger.info(f"Direction confirmed in {thread_ts}, escalating to resolver")
 
@@ -120,9 +121,7 @@ def register_resolution_handler(app, bot_user_id: str) -> None:
                     task_card_id=task_data["task_card_id"],
                 )
 
-            # "thanks / makes sense / got it" → Mira's investigation answered it,
-            # no resolver needed → offer to save
-            elif classify_resolution(text):
+            elif direction == "RESOLVED":
                 task_data = _direction_threads.pop(thread_ts)
                 _seen_ambient_threads.add(thread_ts)
                 ctx = json.dumps({
