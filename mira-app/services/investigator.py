@@ -9,10 +9,12 @@ This is the MCP pattern: the AI drives the investigation, not scripted Python.
 Claude decides the strategy; we execute whatever it asks for.
 
 Tools available to Claude:
-  search_github(query)        — searches loopback-analytics codebase
+  search_github(query)        — searches loopback-analytics codebase (SQL, schema, docs)
   read_file(path)             — reads a specific file from the analytics repo
   search_slack_history(query) — searches Slack workspace history (RTS API)
-  read_known_issues()         — reads docs/known_issues.md directly
+
+All persistent knowledge lives in the Knowledge Vault, not in static files.
+Mira finds clues from code/schema; humans confirm and explain; Vault learns from that.
 """
 
 import logging
@@ -21,7 +23,7 @@ from typing import Any
 import anthropic
 
 from config import ANTHROPIC_API_KEY
-from services.mcp_github import search_codebase, _read_file, read_known_issues
+from services.mcp_github import search_codebase, _read_file
 from services.slack_search import search_slack_history as _search_slack
 
 logger = logging.getLogger(__name__)
@@ -76,15 +78,6 @@ _TOOLS = [
             "required": ["query"]
         }
     },
-    {
-        "name": "read_known_issues",
-        "description": "Read the known data quality issues document from the analytics repository.",
-        "input_schema": {
-            "type": "object",
-            "properties": {},
-            "required": []
-        }
-    }
 ]
 
 _SYSTEM = """You are Mira, an AI analyst embedded in a Slack workspace.
@@ -128,12 +121,6 @@ def _execute_tool(tool_name: str, tool_input: dict) -> str:
                 f"@{r.get('username', 'unknown')} in #{r.get('channel_name', '?')}:\n{r['text'][:300]}"
                 for r in results[:3]
             )
-
-        elif tool_name == "read_known_issues":
-            content = read_known_issues()
-            if not content:
-                return "Known issues document not found."
-            return content[:3000]
 
         else:
             return f"Unknown tool: {tool_name}"
