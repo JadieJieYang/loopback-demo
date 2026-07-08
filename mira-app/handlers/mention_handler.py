@@ -159,9 +159,6 @@ def register_mention_handler(app):
                          thread_ts=thread_ts, asker_id=asker_id,
                          context_summary=context_summary)
 
-            say(channel=channel, thread_ts=thread_ts,
-                text="Based on what I found, does this look like the right direction? Reply *yes* to loop in your team.")
-
             register_direction_thread(
                 thread_ts=thread_ts,
                 card_ts=card_ts,

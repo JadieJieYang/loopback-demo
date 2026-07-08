@@ -332,10 +332,6 @@ def _investigate_proactively(text: str, channel: str, message_ts: str,
                                    context_summary=context_summary),
             text=f"[direction_check] {text}",
         )
-        client.chat_postMessage(
-            channel=channel, thread_ts=message_ts,
-            text="Based on what I found, does this look like the right direction? Reply *yes* to loop in your team.",
-        )
         register_direction_thread(message_ts, card_ts, channel, text,
                                   asker_id, task_card_id, context_summary)
     else:
