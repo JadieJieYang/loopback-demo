@@ -12,10 +12,11 @@ This is the zero-@mention flow: teams work normally, Mira handles everything.
 import json
 import re
 
-from services.intent import classify_intent, classify_resolution, classify_direction_response
+from services.intent import classify_intent, classify_resolution, classify_direction_response, classify_is_deflection
 from services.task_card import build_task_card
 from services.vault_client import VaultClient
 
+# Structural pattern only — detects Slack bot mention format <@U...>, not semantic
 _BOT_MENTION_RE = re.compile(r"<@[A-Z0-9]+>")
 
 _vault = VaultClient()
@@ -28,17 +29,6 @@ _direction_threads: dict = {}
 
 # threads where Mira already sent (or decided not to send) an ambient nudge
 _seen_ambient_threads: set = set()
-
-_POSITIVE_PATTERNS = re.compile(
-    r"\b(yes|yeah|yep|correct|right|exactly|confirm|go ahead|proceed|looks right|that'?s? it)\b",
-    re.IGNORECASE,
-)
-
-# Answers that redirect rather than resolve — not worth saving
-_DEFLECTION_PATTERNS = re.compile(
-    r"\b(create|open|submit|file|raise|log)\s+a?\s*(ticket|jira|issue|bug report|pr)\b",
-    re.IGNORECASE,
-)
 
 
 def register_active_thread(thread_ts, card_ts, channel, question_text, asker_id, task_card_id):
@@ -230,7 +220,7 @@ def register_resolution_handler(app, bot_user_id: str) -> None:
             answer_text = answer_msg.get("text", "")
 
             # Skip deflections ("please create a ticket", etc.)
-            if _DEFLECTION_PATTERNS.search(answer_text):
+            if classify_is_deflection(answer_text):
                 return
 
             ctx = json.dumps({

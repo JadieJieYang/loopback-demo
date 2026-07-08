@@ -98,6 +98,27 @@ UNCLEAR  — not enough signal (e.g. "maybe", "hmm", a new question)
 Respond with exactly one word: ESCALATE, RESOLVED, or UNCLEAR. Nothing else."""
 
 
+def classify_is_deflection(answer_text: str) -> bool:
+    """Return True if an answer deflects rather than resolves (e.g. 'create a ticket')."""
+    try:
+        response = _client.messages.create(
+            model=_MODEL,
+            max_tokens=10,
+            system=(
+                "You are reading a Slack message that was given as an answer to a question. "
+                "Decide whether this answer DEFLECTS the question (redirects to a ticket, "
+                "Jira issue, or another process without actually answering it) or ANSWERS it "
+                "(provides real information or resolution). "
+                "Respond with exactly one word: DEFLECTION or ANSWER. Nothing else."
+            ),
+            messages=[{"role": "user", "content": answer_text}],
+        )
+        label = response.content[0].text.strip().upper()
+    except Exception:
+        label = "ANSWER"
+    return label.startswith("DEFLECTION")
+
+
 def classify_direction_response(message_text: str) -> str:
     """
     Classify asker's reply to a direction check.
