@@ -274,8 +274,9 @@ def register_resolution_handler(app, bot_user_id: str) -> None:
                 ],
                 text="Looks like this was resolved! Want me to save it to the Knowledge Vault?",
             )
-        except Exception:
-            logger.exception("Ambient Q&A nudge failed for thread %s", thread_ts)
+        except Exception as e:
+            if "thread_not_found" not in str(e):
+                logger.exception("Ambient Q&A nudge failed for thread %s", thread_ts)
 
 
 # ── Proactive investigation (called for top-level questions) ──────────────────
@@ -293,6 +294,7 @@ def _investigate_proactively(text: str, channel: str, message_ts: str,
     if message_ts in _proactive_seen:
         return
     _proactive_seen.add(message_ts)
+    _seen_ambient_threads.add(message_ts)  # prevent ambient nudge on same thread
 
     intent = classify_intent(text)
     if not intent.is_question:
