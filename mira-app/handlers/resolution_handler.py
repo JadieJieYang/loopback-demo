@@ -13,6 +13,7 @@ import json
 import re
 
 from services.intent import classify_intent, classify_resolution, classify_direction_response, classify_is_deflection
+from services.reactions import update_status_reaction
 from services.task_card import build_task_card
 from services.vault_client import VaultClient
 
@@ -101,6 +102,7 @@ def register_resolution_handler(app, bot_user_id: str) -> None:
 
                 try:
                     _vault.update_status(task_data["task_card_id"], "human_working")
+                    update_status_reaction(client, task_data["channel"], thread_ts, "human_working")
                 except Exception:
                     logger.exception("Failed to update status after direction confirmed")
 
@@ -218,6 +220,7 @@ def register_resolution_handler(app, bot_user_id: str) -> None:
 
         try:
             _vault.update_status(task["task_card_id"], "pending_confirm")
+            update_status_reaction(client, task["channel"], thread_ts, "pending_confirm")
         except Exception:
             logger.exception("Failed to update vault status on resolution detection")
 
@@ -402,6 +405,7 @@ def _investigate_proactively(text: str, channel: str, message_ts: str,
         confidence = vault_result.get("confidence", 0)
         vault_hit = confidence >= 0.82
         _vault.update_status(task_card_id, "pending_confirm")
+        update_status_reaction(client, channel, message_ts, "pending_confirm")
         client.chat_update(
             channel=channel, ts=card_ts,
             blocks=build_task_card(text, status="pending_confirm",
@@ -421,6 +425,7 @@ def _investigate_proactively(text: str, channel: str, message_ts: str,
     context_summary = investigate(text)
 
     if context_summary:
+        update_status_reaction(client, channel, message_ts, "human_working")
         client.chat_update(
             channel=channel, ts=card_ts,
             blocks=build_task_card(text, status="direction_check",
@@ -432,6 +437,7 @@ def _investigate_proactively(text: str, channel: str, message_ts: str,
                                   asker_id, task_card_id, context_summary)
     else:
         _vault.update_status(task_card_id, "human_working")
+        update_status_reaction(client, channel, message_ts, "human_working")
         client.chat_update(
             channel=channel, ts=card_ts,
             blocks=build_task_card(text, status="human_working",

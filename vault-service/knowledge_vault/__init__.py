@@ -349,7 +349,7 @@ def get_channel_task_cards(channel_id: str, since: str) -> list[dict]:
         .select("id, question_raw, status, thread_ts, vault_entry_id")
         .eq("channel_id", channel_id)
         .gte("created_at", since)
-        .in_("status", ["verified", "unconfirmed", "human_working", "escalate"])
+        .in_("status", ["verified", "unconfirmed", "pending_confirm", "human_working", "escalate"])
         .execute()
     )
     cards = tc_result.data or []

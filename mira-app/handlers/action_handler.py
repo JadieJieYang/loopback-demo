@@ -10,6 +10,7 @@ vault_not_helpful — "Outdated?" / "Not quite"
 import json
 from typing import Optional
 
+from services.reactions import update_status_reaction
 from services.task_card import build_task_card
 from services.vault_client import VaultClient
 from handlers.resolution_handler import register_active_thread
@@ -47,6 +48,7 @@ def register_action_handlers(app):
                 signal="signal_1",
                 source_thread=source_thread,
             )
+            update_status_reaction(client, channel, thread_ts, "verified")
         except Exception:
             logger.exception("Vault upsert_entry failed on confirm")
 
@@ -80,6 +82,7 @@ def register_action_handlers(app):
 
         try:
             _vault.update_status(task_card_id, "escalate")
+            update_status_reaction(client, channel, thread_ts, "escalate")
         except Exception:
             logger.exception("Vault update_status failed on not_helpful")
 
@@ -187,6 +190,7 @@ def register_action_handlers(app):
             )
             # Update task card status so Channel Insights counts it correctly
             _vault.update_status(task_card_id, "verified")
+            update_status_reaction(client, channel, thread_ts, "verified")
         except Exception:
             logger.exception("Ambient vault save failed")
 

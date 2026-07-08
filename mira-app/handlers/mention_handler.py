@@ -16,6 +16,7 @@ import re
 
 from services.intent import classify_intent
 from services.investigator import investigate
+from services.reactions import update_status_reaction
 from services.task_card import build_task_card
 from services.vault_client import VaultClient
 from handlers.resolution_handler import register_active_thread, register_direction_thread, register_pending_thread
@@ -135,6 +136,7 @@ def register_mention_handler(app):
             result_payload = [{**vault_result, "task_card_id": task_card_id}]
 
             _vault.update_status(task_card_id, "pending_confirm")
+            update_status_reaction(client, channel, thread_ts, "pending_confirm")
 
             vault_hit = confidence >= _VAULT_HIGH_CONFIDENCE
             _update_card(client, channel, card_ts, question_text, "pending_confirm",
@@ -174,6 +176,7 @@ def register_mention_handler(app):
         else:
             # ── Tier 3: Escalate ─────────────────────────────────────────
             _vault.update_status(task_card_id, "human_working")
+            update_status_reaction(client, channel, thread_ts, "human_working")
             _update_card(client, channel, card_ts, question_text, "human_working",
                          thread_ts=thread_ts, asker_id=asker_id)
             register_active_thread(

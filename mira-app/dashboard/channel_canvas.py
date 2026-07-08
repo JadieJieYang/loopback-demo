@@ -163,7 +163,7 @@ def _build_markdown(cards: list[dict], channel_name: str, label: str) -> str:
     now_str = datetime.now(timezone.utc).strftime("%b %d, %Y %H:%M UTC")
 
     verified     = [c for c in cards if c["status"] == "verified"]
-    unanswered   = [c for c in cards if c["status"] == "unconfirmed"]
+    unanswered   = [c for c in cards if c["status"] in ("unconfirmed", "pending_confirm")]
     open_q       = [c for c in cards if c["status"] in ("human_working", "escalate")]
     total        = len(cards)
 
