@@ -23,7 +23,7 @@ from typing import Any
 import anthropic
 
 from config import ANTHROPIC_API_KEY
-from services.mcp_github import search_codebase, _read_file
+from services.mcp_github import search_codebase, _read_file, _ANALYTICS_REPO
 from services.slack_search import search_slack_history as _search_slack
 
 logger = logging.getLogger(__name__)
@@ -118,10 +118,12 @@ def _execute_tool(tool_name: str, tool_input: dict) -> str:
             )
 
         elif tool_name == "read_file":
-            content = _read_file(tool_input["path"])
+            path = tool_input["path"]
+            content = _read_file(path)
             if not content:
-                return f"File not found: {tool_input['path']}"
-            return content[:2500]
+                return f"File not found: {path}"
+            github_url = f"https://github.com/{_ANALYTICS_REPO}/blob/main/{path}"
+            return f"github: {github_url}\n\n{content[:2500]}"
 
         elif tool_name == "search_slack_history":
             results = _search_slack(tool_input["query"])
