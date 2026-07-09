@@ -422,7 +422,6 @@ def _investigate_proactively(text: str, channel: str, message_ts: str,
     context_summary = investigate(text)
 
     if context_summary:
-        update_status_reaction(client, channel, message_ts, "human_working")
         client.chat_update(
             channel=channel, ts=card_ts,
             blocks=build_task_card(text, status="direction_check",
