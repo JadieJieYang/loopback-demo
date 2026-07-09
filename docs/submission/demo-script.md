@@ -58,12 +58,12 @@ Card → 🔎 **Direction Check** — Mira posts findings in thread.
 
 Jie replies:
 ```
-yes that looks right!
+yes that makes sense! can someone from the data team confirm and fix this?
 ```
 
-Card → 🆕 **First time this has been asked** *(findings visible in card · ❓ emoji appears on Jie's original message — signals the team)*
+Card → 🆕 **First time this has been asked** *(findings visible in card · ❓ emoji appears on Jie's original message — signals the data team to step in)*
 
-Jinqiu replies directly to Jie in thread *(Mira stays silent — she's listening, not relaying)*:
+Jinqiu sees the ❓ on Jie's message and the findings already assembled in the card, replies directly to Jie *(Mira stays silent — she's listening, not relaying)*:
 ```
 confirmed — product_type was missing from a batch of records after the March migration.
 we've added the NOT NULL constraint and the backfill is done.
