@@ -47,7 +47,6 @@ def _update_card(client, channel, ts, question, status,
 def register_mention_handler(app):
     @app.event("app_mention")
     def handle_mention(event, say, client, logger):
-        logger.info(f"app_mention received: {event.get('text', '')!r}")
         question_text = _strip_mention(event.get("text", ""))
 
         if not question_text:
