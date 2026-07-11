@@ -353,7 +353,7 @@ Open the Slack Canvas.
 
 ## From repeated questions to a product insight
 
-**[SCREEN]** Show the Enhancement Opportunities section in the Canvas — hold 3 seconds, let the viewer read:
+**[SCREEN]** Show the Enhancement Opportunities section in the Canvas — hold 4 seconds, let the viewer read:
 
 ```
 🌱 Enhancement Opportunities
@@ -364,8 +364,6 @@ Approval rate drops lack self-serve diagnosis  ·  5 related questions
 - No question was resolved without human involvement...
 - Suggested: Create a runbook or dashboard annotation explaining
   common causes of approval rate fluctuations...
-
-[ Approve ]   [ Defer ]   [ Reject ]
 ```
 
 **[SAY]**
@@ -374,12 +372,9 @@ Approval rate drops lack self-serve diagnosis  ·  5 related questions
 >
 > Claude reads the actual resolved task cards —
 > no predefined categories, no templates —
-> and generates this analysis from what it actually saw."
-
-**[SCREEN]** Jinqiu clicks `Approve` inside the Canvas. Canvas confirms.
-
-**[SAY]**
-> "What looked like five separate support questions
+> and generates this analysis from what it actually saw.
+>
+> What looked like five separate support questions
 > becomes one thing the product team can fix.
 >
 > Support work becomes product learning."
