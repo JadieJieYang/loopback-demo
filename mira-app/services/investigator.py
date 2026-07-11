@@ -174,7 +174,8 @@ def investigate(question: str) -> str:
         if response.stop_reason == "end_turn":
             for block in response.content:
                 if hasattr(block, "text") and block.text.strip():
-                    return block.text.strip()
+                    # Slack renders *text* as bold, not **text** — normalise here
+                    return block.text.strip().replace("**", "*")
             return ""
 
         if response.stop_reason == "tool_use":
