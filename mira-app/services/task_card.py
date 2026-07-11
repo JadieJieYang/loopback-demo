@@ -274,6 +274,7 @@ def _button_value(result: dict[str, Any], answer: str,
         "entry_id": result.get("entry_id", ""),
         "answer": answer,
         "owner_id": result.get("owner_id", ""),
+        "source_thread": result.get("source_thread", ""),  # preserve original thread link
         "thread_ts": thread_ts or "",
         "asker_id": asker_id or "",
         "vault_hit": vault_hit,

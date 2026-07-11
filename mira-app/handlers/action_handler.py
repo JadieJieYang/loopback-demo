@@ -40,17 +40,25 @@ def register_action_handlers(app):
         source_thread = _thread_permalink(channel, thread_ts)
 
         try:
-            _vault.upsert_entry(
-                task_card_id=task_card_id,
-                question_canonical=question_text,
-                answer=answer,
-                owner_id=owner_id,
-                signal="signal_1",
-                source_thread=source_thread,
-            )
+            if vault_hit and entry_id:
+                # Answer already in Vault — just record the usage, don't create a duplicate entry.
+                # source_thread must stay pointing to the ORIGINAL thread, not this one.
+                _vault.update_status(task_card_id, "verified", vault_entry_id=entry_id)
+            else:
+                _vault.upsert_entry(
+                    task_card_id=task_card_id,
+                    question_canonical=question_text,
+                    answer=answer,
+                    owner_id=owner_id,
+                    signal="signal_1",
+                    source_thread=source_thread,
+                )
             update_status_reaction(client, channel, thread_ts, "verified")
         except Exception:
-            logger.exception("Vault upsert_entry failed on confirm")
+            logger.exception("Vault confirm failed")
+
+        # For vault hits, keep the original source_thread from the existing entry
+        display_source_thread = source_thread if not vault_hit else value.get("source_thread", source_thread)
 
         client.chat_update(
             channel=channel,
@@ -60,7 +68,7 @@ def register_action_handlers(app):
                 status="verified",
                 results=[{"task_card_id": task_card_id, "entry_id": entry_id,
                           "answer": answer, "confidence": 0.95,
-                          "owner_id": owner_id, "source_thread": source_thread}],
+                          "owner_id": owner_id, "source_thread": display_source_thread}],
                 thread_ts=thread_ts,
                 asker_id=asker_id,
                 vault_hit=vault_hit,
