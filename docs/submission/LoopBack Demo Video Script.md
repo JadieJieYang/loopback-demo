@@ -6,23 +6,6 @@ Roles: Jie = Business Analyst / requester · Jinqiu = Data Engineer / resolver
 Voice: One narrator
 Tone: Calm, human, understated. Let the product speak for itself.
 
----
-
-## Pre-recording checklist
-
-- Bot running, terminal hidden
-- Slack full screen
-- Notifications silenced
-- Knowledge Vault empty at the beginning of Act 1
-- Act 1 completed once before recording Act 2, so the Vault can return a verified result
-- Canvas deleted before recording, so Mira creates a fresh one
-- Jie and Jinqiu accounts ready in separate browser windows or devices
-- Channel #loopback-test-env cleared or scrolled past previous test messages
-- Screen recording started
-- Microphone tested
-
----
-
 # INTRO — 0:00–0:28
 
 **[SCREEN]** LoopBack logo and tagline over a blurred Slack background.
@@ -307,14 +290,18 @@ Do not move the cursor. Do not scroll. Let the viewer experience the speed.
 **[SAY]**
 > "One question can be an interruption.
 >
-> Five questions can be a signal."
+> Five questions can be a signal.
+>
+> Mira surfaces that signal in a Slack Canvas —
+> a live, structured document that lives inside the workspace,
+> updated automatically as questions get resolved."
 
 **[SCREEN]** Send the command. Mira displays a period selector. Jinqiu clicks `This Month`.
 
 Mira confirms:
 
 ```
-Canvas updated — This Month
+✅ Canvas updated — This Month (July 2026)
 ```
 
 Open the Slack Canvas.
@@ -323,56 +310,77 @@ Open the Slack Canvas.
 
 ## What the team has learned
 
-**[SCREEN]** Show the Canvas Impact section — let it breathe for 3 seconds:
+**[SCREEN]** Show the Canvas — hold 4 seconds, scroll slowly through all sections:
 
 ```
-📊 Impact — This Month
+📊 Impact
 
-5 questions received
+5 questions received this month.
 
-  ✅  1 verified — confirmed, ready to reuse
-  🔔  1 unconfirmed — suggested at 68% confidence, not yet confirmed
-  ❓  3 open — still needs a human
+→ 3 resolved — answers ready to reuse, no resolver needed next time
+→ 1 unconfirmed — suggested at 68% confidence, flagged for follow-up
+→ 1 open — resolver is being looped in
+
+Mira can now auto-serve 3 topics instantly.
+Every verified answer means one less interruption next time around.
+
+─────────────────────────────────────────────────
+
+🧠 Knowledge Vault
+
+March migration caused NULL product_type drop in approval metrics
+✅ 95% confidence · answered by @Jinqiu · View original thread ↗
+
+  - Hey, why are approved application numbers so low... ↗
+  - Hey, why are approved application numbers so low... ↗
+
+─────────────────────────────────────────────────
+
+❓ Open — no answer yet
+
+Hi team, our approval rate has dropped quite a bit this week...
+🔍 Investigated → ✓ Direction confirmed → ⏳ Awaiting resolver
+View thread ↗
 ```
 
 **[SAY]**
-> "Over time, Mira can see more than individual answers.
+> "The Canvas shows the full picture in one place —
+> what's been resolved, what's confirmed,
+> what's still waiting.
 >
-> She can see what the team keeps running into—
->
-> what has been resolved,
-> what is still uncertain,
-> and what people keep needing help with.
->
-> And she tracks how confident she is in each answer.
-> The ones the team hasn't confirmed yet stay flagged — until someone does."
+> The Knowledge Vault groups similar questions
+> under a single verified answer.
+> Semantic similarity, not keywords —
+> Mira recognizes they're asking the same thing
+> even when the words are different."
 
-**[SCREEN]** Scroll slowly to `Enhancement Opportunities` section in the Canvas.
+**[SCREEN]** Scroll to `Enhancement Opportunities`.
 
 ---
 
 ## From repeated questions to a product insight
 
-**[SCREEN]** Show the Enhancement Opportunities section in the Canvas — hold 4 seconds, let the viewer read:
+**[SCREEN]** Show the Enhancement Opportunities section — hold 4 seconds:
 
 ```
 🌱 Enhancement Opportunities
 AI-generated from resolved questions · This Month (July 2026)
 
-Approval rate drops lack self-serve diagnosis  ·  5 related questions
-- All 5 questions this month are variations of the same concern...
-- No question was resolved without human involvement...
-- Suggested: Create a runbook or dashboard annotation explaining
-  common causes of approval rate fluctuations...
+1. 📖 Approval rate drops lack self-serve explanation  ·  5 related questions
+   - All 5 questions this month are variations of the same concern...
+   - No question was resolved without human involvement...
+   - Suggested: Publish a runbook explaining common causes of
+     approval rate fluctuations so users can self-diagnose first.
 ```
 
 **[SAY]**
-> "As Mira learns how the team works,
-> she also begins to notice where the work keeps breaking down.
+> "Claude read every resolved task card from this period —
+> not to summarize what people said,
+> but to identify what the pattern means.
 >
-> Claude reads the actual resolved task cards —
-> no predefined categories, no templates —
-> and generates this analysis from what it actually saw.
+> No predefined categories. No templates.
+> A genuine AI-generated product insight,
+> surfaced directly in Slack where the team already works.
 >
 > What looked like five separate support questions
 > becomes one thing the product team can fix.
@@ -406,21 +414,30 @@ Let each stage illuminate slowly.
 > "Teams spend nearly a full day every week
 > chasing information a colleague already has.
 >
-> Most knowledge tools try to fix that
+> Most tools try to fix that
 > by asking someone to stop working and start documenting.
 >
 > Nobody does."
 
-**[SCREEN]** Show the verified answer and the approved product insight side by side.
+**[SCREEN]** Show the three-tier flow side by side: Direction Check card → Verified Answer card → Canvas.
 
 **[SAY]**
-> "LoopBack learns inside the work itself.
+> "LoopBack is a three-tier AI agent built entirely inside Slack.
 >
-> From the questions people ask.
+> Tier one: semantic vector search against the Knowledge Vault —
+> verified answers returned in seconds.
 >
-> From the context they uncover.
+> Tier two: an agentic Claude tool-use loop —
+> reading your actual schema files via GitHub MCP,
+> searching your workspace history via the Real-Time Search API,
+> and reasoning about what it found before looping anyone in.
 >
-> From the answers that actually help."
+> Tier three: a human answers directly.
+> Mira captures the conversation. The Vault grows.
+>
+> This only works because it lives inside Slack.
+> The knowledge, the conversations, the Canvas —
+> none of it leaves the place where the work happens."
 
 **[SCREEN]** Transition to the LoopBack logo.
 
